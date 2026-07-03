@@ -26,15 +26,12 @@ export default function App() {
   const [items, setItems] = useState<ScrapedItem[]>([]);
   const [logs, setLogs] = useState<ScrapingLog[]>([]);
   const [url, setUrl] = useState("");
-  const [platform, setPlatform] = useState<'ebay' | 'amazon' | 'gumtree' | 'facebook' | 'generic' | 'other' | 'auto'>("auto");
-  const [engine, setEngine] = useState<'infatica' | 'instant'>('infatica');
   const [manualHtml, setManualHtml] = useState("");
-  const [delayMs, setDelayMs] = useState<number>(2000);
+  const [delayMs, setDelayMs] = useState<number>(1500);
   const [isScraping, setIsScraping] = useState(false);
   const [showManualPaste, setShowManualPaste] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
   const [selectedCondition, setSelectedCondition] = useState<string>("all");
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
@@ -42,74 +39,107 @@ export default function App() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [showAddManualForm, setShowAddManualForm] = useState(false);
+  
   const [manualItemForm, setManualItemForm] = useState<Partial<ScrapedItem>>({
-    title: "", price: "", condition: "", location: "", platform: "other", url: ""
+    title: "",
+    price_aud: 0,
+    condition_label: "Brand New",
+    pickup_location_text: "",
+    url: "",
+    gpu_name: "",
+    vram_capacity: 0,
+    cpu_name: "",
+    total_system_ram: 0,
+    storage: "",
+    exact_model_name: "",
+    seller_name: "",
+    seller_rating: 100
   });
 
-const loadDemoData = () => {
-    setItems([
+  const loadDemoData = () => {
+    const demoItems: ScrapedItem[] = [
       {
-        id: "demo-laptop-1",
-        
-        full_listing_text: "Lenovo ThinkPad T480s 14\" FHD i7-8650U 16GB 512GB NVMe SSD Windows 11 ProCondition: Used - Very GoodPrice: $249.99Shipping: $15.00 Standard ShippingSeller: thinkpad_refurbs (99.8% positive feedback)Location: Austin, TXDescription: Excellent condition Lenovo ThinkPad T480s. Cleaned and tested. Comes with genuine 65W USB-C charger. Battery holds an excellent charge (over 80% original capacity). Minor wear on the trackpad. Fast shipping!",
-        analysis_output: {
-          metadata: {
-            platform: "ebay",
-            url: "https://www.ebay.com/itm/demo-thinkpad-t480s",
-            scrapedAt: new Date().toISOString(),
-            searchQuery: "?q=thinkpad+t480s"
-          },
-          extracted_data: {
-            title: "Lenovo ThinkPad T480s 14\" FHD i7-8650U 16GB 512GB NVMe SSD Windows 11 Pro",
-            price: "$249.99",
-            numericPrice: 249.99,
-            currency: "$",
-            imageUrl: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=150&auto=format&fit=crop&q=60",
-            condition: "Used - Very Good",
-            location: "Austin, TX",
-            shippingCost: "$15.00 Standard Shipping",
-            sellerName: "thinkpad_refurbs",
-            sellerRating: "99.8%",
-            stockStatus: "1 available",
-            bidsCount: "",
-            extraData: "{\"processor\": \"Intel Core i7 8th Gen\", \"ram\": \"16GB\", \"storage\": \"512GB NVMe\"}"
-          },
-          analysis: "This ThinkPad T480s appears to be in very good condition with a healthy battery (>80%) and includes an OEM charger. The i7 processor and 16GB RAM make it a solid daily driver at this price point. Minor trackpad wear is standard for this model."
-        }
+        id: "demo-ebay-1",
+        platform: "EBAY_AU",
+        listing_id: "325123456789",
+        url: "https://www.ebay.com.au/itm/325123456789",
+        title: "MSI Titan 18 HX - RTX 4090 - 128GB RAM - 4TB SSD",
+        price_aud: 6500.00,
+        seller_name: "tech_store_melbourne",
+        seller_rating: 99.5,
+        condition_code: "1000",
+        condition_label: "Brand New",
+        shipping_type: "Free Standard Postage",
+        pickup_location_text: "Northcote, Victoria, Australia",
+        category_path: "Computers/Tablets & Networking > Laptops & Netbooks > PC Laptops & Netbooks",
+        full_listing_text: "Up for sale is a brand new MSI Titan 18 HX featuring the top-tier RTX 4090 with 16GB VRAM. Perfect for local AI inference and heavy multitasking. Comes with 128GB system RAM and 4TB NVMe storage.",
+        scraped_at: new Date().toISOString(),
+        gpu_name: "NVIDIA GeForce RTX 4090 Laptop GPU",
+        vram_capacity: 16,
+        cpu_name: "Intel Core i9-14900HX",
+        total_system_ram: 128,
+        storage: "4TB NVMe SSD",
+        egpu_model: null,
+        touchscreen_digitizer: false,
+        exact_model_name: "MSI Titan 18 HX",
+        numericPrice: 6500.00
       },
       {
-        id: "demo-laptop-2",
-        
-        full_listing_text: "Apple MacBook Pro 16\" (2021) - M1 Pro - 16GB RAM - 512GB SSD - Space GrayCondition: Open BoxPrice: $1,450.00Shipping: Free ShippingSeller: tech_exchange_hub (100% positive)Location: Seattle, WADescription: Like new condition. Box was opened but the laptop was barely used. Battery cycle count is only 12. No scratches or dents. Comes with original box and accessories. AppleCare+ eligible until next month.",
-        analysis_output: {
-          metadata: {
-            platform: "ebay",
-            url: "https://www.ebay.com/itm/demo-macbook-pro-16",
-            scrapedAt: new Date().toISOString(),
-            searchQuery: "?q=macbook+pro+16+m1"
-          },
-          extracted_data: {
-            title: "Apple MacBook Pro 16\" (2021) - M1 Pro - 16GB RAM - 512GB SSD - Space Gray",
-            price: "$1,450.00",
-            numericPrice: 1450.0,
-            currency: "$",
-            imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=150&auto=format&fit=crop&q=60",
-            condition: "Open Box",
-            location: "Seattle, WA",
-            shippingCost: "Free Shipping",
-            sellerName: "tech_exchange_hub",
-            sellerRating: "100%",
-            stockStatus: "1 available",
-            bidsCount: "",
-            extraData: "{\"battery_cycles\": \"12\", \"warranty\": \"AppleCare eligible\"}"
-          },
-          analysis: "Excellent deal for an M1 Pro 16-inch. The extremely low battery cycle count (12) corroborates the 'Open Box' claim. Factor in the free shipping and this is a premium find."
-        }
+        id: "demo-ebay-2",
+        platform: "EBAY_AU",
+        listing_id: "145678901234",
+        url: "https://www.ebay.com.au/itm/145678901234",
+        title: "Lenovo ThinkPad T14 Gen 3 AMD Ryzen 7 PRO 6850U 32GB RAM 1TB SSD",
+        price_aud: 1250.00,
+        seller_name: "oz_refurb_kings",
+        seller_rating: 98.9,
+        condition_code: "3000",
+        condition_label: "Excellent - Refurbished",
+        shipping_type: "Standard Postage $15.00",
+        pickup_location_text: "Sydney, New South Wales, Australia",
+        category_path: "Computers/Tablets & Networking > Laptops & Netbooks > PC Laptops & Netbooks",
+        full_listing_text: "Refurbished Lenovo ThinkPad T14 Gen 3. Equipped with a super-efficient Ryzen 7 PRO processor, 32GB LPDDR5 system RAM, and 1TB NVMe SSD. Crisp WUXGA display. Minimal wear, fully tested.",
+        scraped_at: new Date().toISOString(),
+        gpu_name: "AMD Radeon 680M Graphics",
+        vram_capacity: null,
+        cpu_name: "AMD Ryzen 7 PRO 6850U",
+        total_system_ram: 32,
+        storage: "1TB NVMe SSD",
+        egpu_model: null,
+        touchscreen_digitizer: false,
+        exact_model_name: "ThinkPad T14 Gen 3 AMD",
+        numericPrice: 1250.00
+      },
+      {
+        id: "demo-ebay-3",
+        platform: "EBAY_AU",
+        listing_id: "278945612301",
+        url: "https://www.ebay.com.au/itm/278945612301",
+        title: "Razer Blade 16 (2024) QHD+ 240Hz OLED i9-14900HX RTX 4080 32GB RAM",
+        price_aud: 4399.00,
+        seller_name: "syndicate_games",
+        seller_rating: 100.0,
+        condition_code: "1500",
+        condition_label: "Open Box - Like New",
+        shipping_type: "Free Express Postage",
+        pickup_location_text: "Brisbane, Queensland, Australia",
+        category_path: "Computers/Tablets & Networking > Laptops & Netbooks > PC Laptops & Netbooks",
+        full_listing_text: "Virtually brand new Razer Blade 16. Features the 240Hz OLED panel, RTX 4080 Laptop GPU, and Core i9 14th gen processor. Absolutely beautiful screen, original premium packaging included.",
+        scraped_at: new Date().toISOString(),
+        gpu_name: "NVIDIA GeForce RTX 4080 Laptop GPU",
+        vram_capacity: 12,
+        cpu_name: "Intel Core i9-14900HX",
+        total_system_ram: 32,
+        storage: "1TB PCIe Gen4 SSD",
+        egpu_model: null,
+        touchscreen_digitizer: false,
+        exact_model_name: "Razer Blade 16",
+        numericPrice: 4399.00
       }
-    ]);
+    ];
+    setItems(demoItems);
+    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'Demo dataset loaded to workspace' }]);
   };
-
-
 
   const appendLogs = (newLogs: ScrapingLog[]) => {
     setLogs(prev => [...prev, ...newLogs]);
@@ -123,79 +153,94 @@ const loadDemoData = () => {
       result = result.filter(item => 
         (item.title || '').toLowerCase().includes(q) ||
         (item.seller_name || '').toLowerCase().includes(q) ||
+        (item.gpu_name || '').toLowerCase().includes(q) ||
+        (item.cpu_name || '').toLowerCase().includes(q) ||
+        (item.exact_model_name || '').toLowerCase().includes(q) ||
         (item.full_listing_text || '').toLowerCase().includes(q)
       );
-    }
-
-    if (selectedPlatform !== 'all') {
-      result = result.filter(item => item.platform === selectedPlatform);
     }
 
     if (selectedCondition !== 'all') {
       result = result.filter(item => {
         const cond = (item.condition_label || '').toLowerCase();
-        if (selectedCondition === 'new') return cond.includes('new') && !cond.includes('used');
-        if (selectedCondition === 'used') return cond.includes('used') || cond.includes('pre-owned') || cond.includes('refurb');
-        if (selectedCondition === 'parts') return cond.includes('parts') || cond.includes('broken');
+        if (selectedCondition === 'new') return cond.includes('new') || cond.includes('sealed') || cond.includes('brand');
+        if (selectedCondition === 'used') return cond.includes('used') || cond.includes('pre-owned') || cond.includes('refurb') || cond.includes('excellent');
+        if (selectedCondition === 'parts') return cond.includes('parts') || cond.includes('broken') || cond.includes('untested');
         return true;
       });
     }
 
     if (minPrice !== '') {
-      result = result.filter(item => (item.numericPrice || 0) >= parseFloat(minPrice));
+      result = result.filter(item => (item.price_aud || 0) >= parseFloat(minPrice));
     }
     
     if (maxPrice !== '') {
-      result = result.filter(item => {
-        const price = item.numericPrice;
-        if (price === null) return true;
-        return price <= parseFloat(maxPrice);
-      });
+      result = result.filter(item => (item.price_aud || 0) <= parseFloat(maxPrice));
     }
 
     result.sort((a, b) => {
-      if (sortBy === 'price_asc') return (a.numericPrice || 0) - (b.numericPrice || 0);
-      if (sortBy === 'price_desc') return (b.numericPrice || 0) - (a.numericPrice || 0);
-      if (sortBy === 'date_desc') return new Date(b.scraped_at || 0).getTime() - new Date(a.scraped_at || 0).getTime();
+      if (sortBy === 'price-asc') return (a.price_aud || 0) - (b.price_aud || 0);
+      if (sortBy === 'price-desc') return (b.price_aud || 0) - (a.price_aud || 0);
+      if (sortBy === 'title-asc') return (a.title || "").localeCompare(b.title || "");
+      if (sortBy === 'scraped-new') return new Date(b.scraped_at || 0).getTime() - new Date(a.scraped_at || 0).getTime();
       return 0;
     });
 
     return result;
-  }, [items, searchQuery, selectedPlatform, selectedCondition, minPrice, maxPrice, sortBy]);
+  }, [items, searchQuery, selectedCondition, minPrice, maxPrice, sortBy]);
 
   const handleAddManualItem = (e: React.FormEvent) => {
     e.preventDefault();
+    const timestamp = Date.now();
+    const cleanPrice = parseFloat(String(manualItemForm.price_aud || 0).replace(/[^\d.]/g, '')) || 0;
+    
     const newItem: ScrapedItem = {
-      id: `manual-${Date.now()}`,
-      platform: (manualItemForm as any).platform || 'other',
-      listing_id: `manual-${Date.now()}`,
-      url: (manualItemForm as any).url || '',
-      title: (manualItemForm as any).title || '',
-      price_aud: (manualItemForm as any).price || '',
-      seller_name: '',
-      seller_rating: '',
-      condition_code: '',
-      condition_label: (manualItemForm as any).condition || '',
-      shipping_type: '',
-      pickup_location_text: (manualItemForm as any).location || '',
-      category_path: '',
-      full_listing_text: (manualItemForm as any).title || '',
+      id: `manual-${timestamp}`,
+      platform: "EBAY_AU",
+      listing_id: manualItemForm.listing_id || String(timestamp),
+      url: manualItemForm.url || 'https://www.ebay.com.au',
+      title: manualItemForm.title || 'Untitled Manual Record',
+      price_aud: cleanPrice,
+      seller_name: manualItemForm.seller_name || 'Manual Seller',
+      seller_rating: manualItemForm.seller_rating !== undefined ? parseFloat(String(manualItemForm.seller_rating)) : 100,
+      condition_code: '1000',
+      condition_label: manualItemForm.condition_label || 'Brand New',
+      shipping_type: 'Free Postage',
+      pickup_location_text: manualItemForm.pickup_location_text || 'Australia',
+      category_path: 'Computers/Tablets & Networking > Laptops & Netbooks',
+      full_listing_text: manualItemForm.full_listing_text || manualItemForm.title || '',
       scraped_at: new Date().toISOString(),
-      gpu_name: null,
-      vram_capacity: null,
-      cpu_name: null,
-      total_system_ram: null,
-      storage: null,
+      gpu_name: manualItemForm.gpu_name || null,
+      vram_capacity: manualItemForm.vram_capacity ? parseInt(String(manualItemForm.vram_capacity)) : null,
+      cpu_name: manualItemForm.cpu_name || null,
+      total_system_ram: manualItemForm.total_system_ram ? parseInt(String(manualItemForm.total_system_ram)) : null,
+      storage: manualItemForm.storage || null,
       egpu_model: null,
-      touchscreen_digitizer: null,
-      exact_model_name: null,
-      numericPrice: (manualItemForm as any).price ? parseFloat(((manualItemForm as any).price).replace(/[^\d.]/g, '')) : null
+      touchscreen_digitizer: false,
+      exact_model_name: manualItemForm.exact_model_name || null,
+      numericPrice: cleanPrice
     };
 
     setItems(prev => [newItem, ...prev]);
     setShowAddManualForm(false);
-    setManualItemForm({ title: "", price: "", condition: "", location: "", platform: "other", url: "" });
+    setManualItemForm({
+      title: "",
+      price_aud: 0,
+      condition_label: "Brand New",
+      pickup_location_text: "",
+      url: "",
+      gpu_name: "",
+      vram_capacity: 0,
+      cpu_name: "",
+      total_system_ram: 0,
+      storage: "",
+      exact_model_name: "",
+      seller_name: "",
+      seller_rating: 100
+    });
+    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'Added manual eBay record conforming to schema' }]);
   };
+
   const handleScrape = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url && !manualHtml) return;
@@ -203,7 +248,7 @@ const loadDemoData = () => {
     setIsScraping(true);
     setLogs([]);
     appendLogs([
-      { timestamp: new Date().toLocaleTimeString(), level: 'info', message: 'Initializing polite scraping engine...' }
+      { timestamp: new Date().toLocaleTimeString(), level: 'info', message: 'Initializing polite scraping sequence...' }
     ]);
     
     try {
@@ -212,10 +257,8 @@ const loadDemoData = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url,
-          platform,
           manualHtml: showManualPaste ? manualHtml : undefined,
-          delayMs,
-          engine
+          delayMs
         })
       });
       const data = await response.json();
@@ -248,50 +291,83 @@ const loadDemoData = () => {
 
   const handleEditClick = (item: ScrapedItem) => {
     setEditingId(item.id);
-    setEditForm(item);
+    setEditForm({
+      ...item,
+      price_aud: String(item.price_aud)
+    });
   };
 
   const handleSaveEdit = (overrideId?: string) => {
     const targetId = overrideId || editingId;
     if (!targetId) return;
-    setItems(prev => prev.map(item => item.id === targetId ? { ...item, ...editForm } as ScrapedItem : item));
+    
+    const parsedPrice = parseFloat(String(editForm.price_aud).replace(/[^\d.]/g, '')) || 0;
+    const updatedForm = {
+      ...editForm,
+      price_aud: parsedPrice,
+      numericPrice: parsedPrice,
+      vram_capacity: editForm.vram_capacity ? parseInt(String(editForm.vram_capacity)) : null,
+      total_system_ram: editForm.total_system_ram ? parseInt(String(editForm.total_system_ram)) : null,
+    };
+    
+    setItems(prev => prev.map(item => item.id === targetId ? { ...item, ...updatedForm } as ScrapedItem : item));
     setEditingId(null);
+    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'Listing row updated' }]);
   };
 
   const handleDelete = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const exportToCSV = () => {
     const itemsToExport = selectedIds.size > 0 ? filteredItems.filter(i => selectedIds.has(i.id)) : filteredItems;
     if (itemsToExport.length === 0) return;
     
-    const headers = ["Title", "Price", "Numeric Price", "Currency", "Condition", "Location", "Shipping", "Seller", "Rating", "Stock", "Bids", "Marketplace", "URL", "Extra", "Scraped At"];
+    const headers = [
+      "platform", "listing_id", "url", "title", "price_aud", 
+      "seller_name", "seller_rating", "condition_code", "condition_label", 
+      "shipping_type", "pickup_location_text", "category_path", "full_listing_text", 
+      "scraped_at", "gpu_name", "vram_capacity", "cpu_name", 
+      "total_system_ram", "storage", "egpu_model", "touchscreen_digitizer", "exact_model_name"
+    ];
+
     const rows = itemsToExport.map(item => [
+      `"${(item.platform || "EBAY_AU").replace(/"/g, '""')}"`,
+      `"${(item.listing_id || "").replace(/"/g, '""')}"`,
+      `"${(item.url || "").replace(/"/g, '""')}"`,
       `"${(item.title || "").replace(/"/g, '""')}"`,
-      `"${(item.price_aud || "").replace(/"/g, '""')}"`,
-      item.numericPrice || "",
-      `"AUD"`,
-      `"${(item.condition_label || "Unknown").replace(/"/g, '""')}"`,
-      `"${(item.pickup_location_text || "N/A").replace(/"/g, '""')}"`,
-      `"${(item.shipping_type || "").replace(/"/g, '""')}"`,
+      item.price_aud || 0,
       `"${(item.seller_name || "").replace(/"/g, '""')}"`,
-      `"${(item.seller_rating || "").replace(/"/g, '""')}"`,
-      `"${(item.gpu_name || "").replace(/"/g, '""')}"`,
-      `"${(item.cpu_name || "").replace(/"/g, '""')}"`,
-      `"${(item.platform || "UNKNOWN").toUpperCase()}"`,
-      `"${item.url}"`,
+      item.seller_rating !== null ? item.seller_rating : "",
+      `"${(item.condition_code || "").replace(/"/g, '""')}"`,
+      `"${(item.condition_label || "").replace(/"/g, '""')}"`,
+      `"${(item.shipping_type || "").replace(/"/g, '""')}"`,
+      `"${(item.pickup_location_text || "").replace(/"/g, '""')}"`,
+      `"${(item.category_path || "").replace(/"/g, '""')}"`,
       `"${(item.full_listing_text || "").replace(/"/g, '""')}"`,
-      `"${item.scraped_at}"`
+      `"${item.scraped_at || ""}"`,
+      `"${(item.gpu_name || "").replace(/"/g, '""')}"`,
+      item.vram_capacity !== null ? item.vram_capacity : "",
+      `"${(item.cpu_name || "").replace(/"/g, '""')}"`,
+      item.total_system_ram !== null ? item.total_system_ram : "",
+      `"${(item.storage || "").replace(/"/g, '""')}"`,
+      `"${(item.egpu_model || "").replace(/"/g, '""')}"`,
+      item.touchscreen_digitizer !== null ? (item.touchscreen_digitizer ? "TRUE" : "FALSE") : "",
+      `"${(item.exact_model_name || "").replace(/"/g, '""')}"`
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("");
+      + [headers.join(","), ...rows.map(e => e.join(","))].join("\r\n");
       
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `marketplace_research_export_${Date.now()}.csv`);
+    link.setAttribute("download", `ebay_hardware_export_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -303,7 +379,7 @@ const loadDemoData = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(itemsToExport, null, 2));
     const link = document.createElement("a");
     link.setAttribute("href", dataStr);
-    link.setAttribute("download", `marketplace_research_export_${Date.now()}.json`);
+    link.setAttribute("download", `ebay_hardware_export_${Date.now()}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -313,66 +389,81 @@ const loadDemoData = () => {
     const itemsToExport = selectedIds.size > 0 ? filteredItems.filter(i => selectedIds.has(i.id)) : filteredItems;
     if (itemsToExport.length === 0) return;
     
-    const headers = ["Title", "Price", "Numeric Price", "Currency", "Condition", "Location", "Shipping", "Seller", "Rating", "Stock", "Bids", "Marketplace", "URL", "Extra", "Scraped At"];
+    const headers = [
+      "platform", "listing_id", "url", "title", "price_aud", 
+      "seller_name", "seller_rating", "condition_code", "condition_label", 
+      "shipping_type", "pickup_location_text", "category_path", "full_listing_text", 
+      "scraped_at", "gpu_name", "vram_capacity", "cpu_name", 
+      "total_system_ram", "storage", "egpu_model", "touchscreen_digitizer", "exact_model_name"
+    ];
+
     const rows = itemsToExport.map(item => [
+      `"${(item.platform || "EBAY_AU").replace(/"/g, '""')}"`,
+      `"${(item.listing_id || "").replace(/"/g, '""')}"`,
+      `"${(item.url || "").replace(/"/g, '""')}"`,
       `"${(item.title || "").replace(/"/g, '""')}"`,
-      `"${(item.price_aud || "").replace(/"/g, '""')}"`,
-      item.numericPrice || "",
-      `"AUD"`,
-      `"${(item.condition_label || "Unknown").replace(/"/g, '""')}"`,
-      `"${(item.pickup_location_text || "N/A").replace(/"/g, '""')}"`,
-      `"${(item.shipping_type || "").replace(/"/g, '""')}"`,
+      item.price_aud || 0,
       `"${(item.seller_name || "").replace(/"/g, '""')}"`,
-      `"${(item.seller_rating || "").replace(/"/g, '""')}"`,
-      `"${(item.gpu_name || "").replace(/"/g, '""')}"`,
-      `"${(item.cpu_name || "").replace(/"/g, '""')}"`,
-      `"${(item.platform || "UNKNOWN").toUpperCase()}"`,
-      `"${item.url}"`,
+      item.seller_rating !== null ? item.seller_rating : "",
+      `"${(item.condition_code || "").replace(/"/g, '""')}"`,
+      `"${(item.condition_label || "").replace(/"/g, '""')}"`,
+      `"${(item.shipping_type || "").replace(/"/g, '""')}"`,
+      `"${(item.pickup_location_text || "").replace(/"/g, '""')}"`,
+      `"${(item.category_path || "").replace(/"/g, '""')}"`,
       `"${(item.full_listing_text || "").replace(/"/g, '""')}"`,
-      `"${item.scraped_at}"`
+      `"${item.scraped_at || ""}"`,
+      `"${(item.gpu_name || "").replace(/"/g, '""')}"`,
+      item.vram_capacity !== null ? item.vram_capacity : "",
+      `"${(item.cpu_name || "").replace(/"/g, '""')}"`,
+      item.total_system_ram !== null ? item.total_system_ram : "",
+      `"${(item.storage || "").replace(/"/g, '""')}"`,
+      `"${(item.egpu_model || "").replace(/"/g, '""')}"`,
+      item.touchscreen_digitizer !== null ? (item.touchscreen_digitizer ? "TRUE" : "FALSE") : "",
+      `"${(item.exact_model_name || "").replace(/"/g, '""')}"`
     ]);
     
     const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     navigator.clipboard.writeText(csvContent);
-    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'CSV copied to clipboard' }]);
+    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'CSV dataset copied to clipboard' }]);
   };
 
   const copyToClipboard = () => {
     const itemsToExport = selectedIds.size > 0 ? filteredItems.filter(i => selectedIds.has(i.id)) : filteredItems;
     if (itemsToExport.length === 0) return;
     navigator.clipboard.writeText(JSON.stringify(itemsToExport, null, 2));
-    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'Dataset copied to clipboard' }]);
+    appendLogs([{ timestamp: new Date().toLocaleTimeString(), level: 'success', message: 'JSON dataset copied to clipboard' }]);
   };
 
   const stats = useMemo(() => {
-    const validPrices = filteredItems.map(item => item.numericPrice).filter((p): p is number => p !== null && p > 0);
-    const sum = validPrices.reduce((a, b) => a + b, 0);
-    const platforms = new Set(filteredItems.map(item => item.platform)).size;
+    const prices = filteredItems.map(item => item.price_aud).filter(p => typeof p === 'number' && p > 0);
+    const sum = prices.reduce((a, b) => a + b, 0);
+    const uniqueLocations = new Set(filteredItems.map(item => item.pickup_location_text).filter(Boolean)).size;
     
     return {
       total: filteredItems.length,
-      average: validPrices.length > 0 ? sum / validPrices.length : 0,
-      min: validPrices.length > 0 ? Math.min(...validPrices) : 0,
-      max: validPrices.length > 0 ? Math.max(...validPrices) : 0,
-      platforms
+      average: prices.length > 0 ? sum / prices.length : 0,
+      min: prices.length > 0 ? Math.min(...prices) : 0,
+      max: prices.length > 0 ? Math.max(...prices) : 0,
+      locations: uniqueLocations
     };
   }, [filteredItems]);
 
   const priceHistogram = useMemo(() => {
     if (stats.max === 0) return [];
     const bins = 6;
-    const range = stats.max === stats.min ? 100 : stats.max - stats.min; // Avoid zero step
+    const range = stats.max === stats.min ? 100 : stats.max - stats.min;
     const step = range / bins;
     
     const histogram = Array.from({ length: bins }).map((_, i) => ({
       min: stats.min + (i * step),
       max: stats.min + ((i + 1) * step),
-      count: 0
+      count: 0,
+      range: `$${Math.round(stats.min + (i * step))}-$${Math.round(stats.min + ((i + 1) * step))}`
     }));
 
     filteredItems.forEach(item => {
-      const price = item.numericPrice;
-      if (price === null || price === 0) return;
+      const price = item.price_aud;
+      if (!price || price === 0) return;
       let placed = false;
       for (let i = 0; i < bins; i++) {
         if (price >= histogram[i].min && price <= histogram[i].max) {
@@ -382,14 +473,16 @@ const loadDemoData = () => {
         }
       }
       if (!placed && price > 0) {
-         histogram[bins-1].count++;
+         histogram[bins - 1].count++;
       }
     });
     
     return histogram;
   }, [filteredItems, stats]);
+
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#0A0A0A] text-[#E4E3E0] font-sans overflow-hidden">
+      {/* Header */}
       <header className="h-16 border-b border-[#262626] flex items-center justify-between px-4 sm:px-8 bg-[#0D0D0D] sticky top-0 z-40">
         <div className="w-full flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -398,12 +491,12 @@ const loadDemoData = () => {
             </div>
             <div>
               <h1 className="font-serif italic text-2xl tracking-tight text-[#E4E3E0] flex items-center gap-2">
-                MarketLens
+                eBay Hardware Scout
                 <span className="px-2 py-1 bg-[#1A1A1A] border border-[#333] rounded text-[10px] tracking-widest text-[#888] font-mono">
-                  BETA V0.1
+                  AU SCHEMA v1.0
                 </span>
               </h1>
-              <p className="text-xs text-[#888] font-mono">GENTLE SCAN ACTIVE</p>
+              <p className="text-xs text-[#888] font-mono">EBAY_AU SPECIFICATION LOADED</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -417,33 +510,34 @@ const loadDemoData = () => {
         </div>
       </header>
 
+      {/* Main Panel */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 py-6 flex flex-col overflow-hidden">
         <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
           
-          {/* Left Column: Scraper Controls */}
+          {/* Left Column: Crawler Controls */}
           <div className="w-full lg:w-[380px] flex flex-col gap-6 overflow-y-auto shrink-0 pb-12">
             <div className="bg-[#0D0D0D] rounded-sm border border-[#262626] p-5 shadow-none space-y-4">
               <div className="flex items-center gap-2 border-b border-[#262626] pb-3">
                 <Settings size={16} className="text-[#888]" />
-                <h2 className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Scraper Config</h2>
+                <h2 className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">eBay Parser Settings</h2>
               </div>
               
               <form onSubmit={handleScrape} className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-[#888]">Target Source URL</label>
+                    <label className="block text-xs font-medium text-[#888]">Target eBay URL</label>
                     <button 
                       type="button" 
                       onClick={() => setShowManualPaste(!showManualPaste)}
                       className="text-[10px] text-[#E4E3E0] hover:underline"
                     >
-                      {showManualPaste ? "Switch to URL" : "Paste Manual HTML?"}
+                      {showManualPaste ? "Switch to URL" : "Paste Watchlist HTML?"}
                     </button>
                   </div>
                   
                   {showManualPaste ? (
                     <textarea
-                      placeholder="Paste raw HTML source here..."
+                      placeholder="Paste raw Watchlist or Search HTML source here..."
                       value={manualHtml}
                       onChange={(e) => setManualHtml(e.target.value)}
                       className="w-full h-32 bg-[#141414] text-xs font-mono border border-[#262626] focus:border-[#E4E3E0] focus:ring-1 focus:ring-[#444] rounded-sm px-3 py-2 outline-none transition resize-none text-[#CCC]"
@@ -455,50 +549,32 @@ const loadDemoData = () => {
                       </div>
                       <input
                         type="url"
-                        placeholder="https://www.ebay.com/sch/..."
+                        placeholder="e.g., https://www.ebay.com.au/itm/..."
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         className="w-full bg-[#141414] text-xs font-mono border border-[#262626] focus:border-[#E4E3E0] focus:ring-1 focus:ring-[#444] rounded-sm pl-9 pr-3 py-2 outline-none transition text-[#CCC]"
                       />
                     </div>
                   )}
+                  <p className="text-[10px] text-[#555] mt-1.5 leading-normal">
+                    Supports eBay item pages, search listings, and raw Watchlist layouts.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#888] mb-1.5">Marketplace Target</label>
-                  <select
-                    value={platform}
-                    onChange={(e: any) => setPlatform(e.target.value)}
-                    className="w-full bg-[#141414] text-xs font-mono border border-[#262626] focus:border-[#E4E3E0] focus:ring-1 focus:ring-[#444] rounded-sm px-3 py-2 outline-none transition text-[#CCC]"
-                  >
-                    <option value="auto">Auto-Detect Platform</option>
-                    <option value="ebay">eBay</option>
-                    <option value="amazon">Amazon</option>
-                    <option value="gumtree">Gumtree</option>
-                    <option value="facebook">Facebook Marketplace</option>
-                    <option value="generic">Generic Table/List</option>
-                    <option value="other">Other/General Webpage</option>
-                  </select>
-                </div>
-                <div className="pt-2 border-t border-[#262626]">
-                  <label className="block text-xs font-medium text-[#888] mb-1.5">Extraction Engine</label>
-                  <select
-                    value={engine}
-                    onChange={(e: any) => setEngine(e.target.value)}
-                    className="w-full bg-[#141414] text-xs font-mono border border-[#262626] focus:border-[#E4E3E0] focus:ring-1 focus:ring-[#444] rounded-sm px-3 py-2 outline-none transition text-[#CCC]"
-                  >
-                    <option value="infatica">Deep E-commerce API (Infatica-style)</option>
-                    <option value="instant">Heuristic Table Extractor (Instant Data-style)</option>
-                  </select>
+                  <label className="block text-xs font-medium text-[#888] mb-1">Target Platform</label>
+                  <div className="w-full bg-[#141414] border border-[#262626] rounded px-3 py-2 text-xs font-mono text-[#CCC]">
+                    EBAY_AU (Fixed)
+                  </div>
                 </div>
 
                 {/* Delay & Polite Crawling Settings */}
                 <div className="pt-2 border-t border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-[#888] flex items-center gap-1">
-                      <Clock size={14} className="text-[#888]" /> Politely Throttle Delay
+                      <Clock size={14} className="text-[#888]" /> Throttled Fetch Delay
                     </span>
-                    <span className="text-xs font-mono text-[#E4E3E0] font-semibold">{delayMs / 1000}s pause</span>
+                    <span className="text-xs font-mono text-[#E4E3E0] font-semibold">{delayMs / 1000}s</span>
                   </div>
                   <input
                     type="range"
@@ -510,24 +586,24 @@ const loadDemoData = () => {
                     className="w-full accent-[#E4E3E0] h-1.5 bg-[#141414] rounded-sm appearance-none cursor-pointer"
                   />
                   <p className="text-[10px] text-[#555] mt-1">
-                    Inserts a gentle timeout wait before compiling to safeguard server IP from aggressive crawler blocking.
+                    Delays HTTP calls to prevent server IP throttling or client-side bans.
                   </p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isScraping || (!url && !manualHtml)}
-                  className="w-full mt-2 bg-[#E4E3E0] hover:bg-white text-[#0A0A0A] font-bold py-3 px-4 rounded-sm text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition duration-150 shadow-none shadow-none disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full mt-2 bg-[#E4E3E0] hover:bg-white text-[#0A0A0A] font-bold py-3 px-4 rounded-sm text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition duration-150 shadow-none disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {isScraping ? (
                     <>
                       <RefreshCw className="animate-spin" size={16} />
-                      Scraping & Extracting...
+                      Extracting Schema...
                     </>
                   ) : (
                     <>
                       <Database size={16} />
-                      Run Scrape Batch
+                      Scrape eBay Source
                     </>
                   )}
                 </button>
@@ -542,7 +618,7 @@ const loadDemoData = () => {
                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isScraping ? 'bg-[#E4E3E0]' : 'bg-[#555]'}`}></span>
                     <span className={`relative inline-flex rounded-full h-2 w-2 ${isScraping ? 'bg-[#E4E3E0]' : 'bg-[#444]'}`}></span>
                   </span>
-                  Gentle Crawler Status Log
+                  Scout Logger Console
                 </span>
                 <button 
                   onClick={() => setLogs([])}
@@ -555,7 +631,7 @@ const loadDemoData = () => {
               <div className="p-4 font-mono text-[11px] leading-relaxed max-h-56 overflow-y-auto space-y-2 bg-[#0D0D0D] text-[#888]">
                 {logs.length === 0 ? (
                   <div className="text-[#444] italic text-center py-6">
-                    Waiting to initiate research run. Enter a URL above or load sample data to explore logs.
+                    Logger inactive. Click "Load Demo" or enter a URL to start scouting.
                   </div>
                 ) : (
                   logs.map((log, idx) => (
@@ -580,19 +656,16 @@ const loadDemoData = () => {
             <div className="bg-[#0D0D0D] rounded-sm border border-[#262626] p-4">
               <h3 className="text-xs font-semibold text-[#CCC] flex items-center gap-1.5 mb-2">
                 <Info size={14} className="text-[#E4E3E0]" />
-                Researcher Hand Book
+                Schema Grounding Rule
               </h3>
-              <ul className="text-xs text-[#888] space-y-1.5 list-disc pl-4 leading-normal">
-                <li>Search URLs containing item listings yield the most successful structural datasets.</li>
-                <li>Amazon and Facebook employ strict cloud firewalls. Use the <strong>Manual HTML Paste</strong> tab for bulletproof extraction on these services.</li>
-                <li>You can manually refine any extracted item parameters directly inside the list grid by clicking the pencil <Edit3 size={12} className="inline"/> edit button on each row.</li>
-              </ul>
+              <p className="text-xs text-[#888] leading-normal">
+                This client operates strictly in <strong>EBAY_AU</strong> mode to populate GPU, CPU, System RAM, and Seller details mapping exactly to the custom structured JSON target structure.
+              </p>
             </div>
-
           </div>
 
           {/* Right panel: Data exploration workspace */}
-          <section className="lg:col-span-8 space-y-6">
+          <section className="flex-1 space-y-6 overflow-y-auto pb-12 pr-1">
 
             {/* Stats Dashboard Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -600,32 +673,32 @@ const loadDemoData = () => {
                 <p className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Total Listings</p>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-2xl font-mono text-[#E4E3E0]">{stats.total}</span>
-                  <span className="text-[10px] bg-[#1A1A1A] border border-[#333] text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono font-medium">unified</span>
+                  <span className="text-[10px] bg-[#1A1A1A] border border-[#333] text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono font-medium">EBAY_AU</span>
                 </div>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-sm border border-[#262626] shadow-none">
                 <p className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Average Price</p>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-2xl font-mono text-[#E4E3E0]">
-                    {stats.average > 0 ? `$${stats.average.toFixed(2)}` : 'N/A'}
+                    {stats.average > 0 ? `$${stats.average.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : 'N/A'}
                   </span>
-                  <span className="text-[10px] bg-[#141414] text-[#888] px-1.5 py-0.5 rounded font-mono">USD</span>
+                  <span className="text-[10px] bg-[#141414] text-[#888] px-1.5 py-0.5 rounded font-mono">AUD</span>
                 </div>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-sm border border-[#262626] shadow-none">
                 <p className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Lowest Price</p>
                 <div className="mt-1 flex items-baseline justify-between">
                   <span className="text-2xl font-mono text-[#E4E3E0]">
-                    {stats.min > 0 ? `$${stats.min.toFixed(2)}` : 'N/A'}
+                    {stats.min > 0 ? `$${stats.min.toLocaleString('en-AU', { maximumFractionDigits: 0 })}` : 'N/A'}
                   </span>
-                  <span className="text-[10px] bg-emerald-500/10 text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono">bargain</span>
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono">lowest</span>
                 </div>
               </div>
               <div className="bg-[#0D0D0D] p-4 rounded-sm border border-[#262626] shadow-none">
-                <p className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Unique Marketplaces</p>
+                <p className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Unique Suburbs</p>
                 <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-2xl font-mono text-[#E4E3E0]">{stats.platforms}</span>
-                  <span className="text-[10px] bg-sky-500/10 text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono">sources</span>
+                  <span className="text-2xl font-mono text-[#E4E3E0]">{stats.locations}</span>
+                  <span className="text-[10px] bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded font-mono">locations</span>
                 </div>
               </div>
             </div>
@@ -634,40 +707,28 @@ const loadDemoData = () => {
             <div className="bg-[#0D0D0D] rounded-sm border border-[#262626] p-5 shadow-none space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#262626]">
                 <h2 className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono flex items-center gap-2">
-                  <SlidersHorizontal size={16} className="text-[#E4E3E0]" /> Advanced Filter Workspace
+                  <SlidersHorizontal size={16} className="text-[#E4E3E0]" /> Filter & Refinement Engine
                 </h2>
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-[#888]">{filteredItems.length} of {items.length} records shown</span>
                 </div>
               </div>
 
-              {/* Text Search & Platform Tabs */}
+              {/* Text Search & Condition select */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-6 relative">
+                <div className="md:col-span-8 relative">
                   <Search size={16} className="absolute left-3 top-3 text-[#555]" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search titles, locations, query patterns..."
+                    placeholder="Search hardware models, CPUs, GPUs, sellers, descriptions..."
                     className="w-full bg-[#0A0A0A] border border-[#262626] focus:border-[#E4E3E0] focus:ring-1 focus:ring-[#444] rounded-sm pl-10 pr-4 py-2 text-sm outline-none transition text-[#E4E3E0] placeholder:text-[#444]"
                   />
                 </div>
 
-                <div className="md:col-span-6 flex space-x-1 bg-[#0A0A0A] p-1 rounded-sm border border-[#262626]">
-                  {['all', 'ebay', 'amazon', 'gumtree', 'facebook'].map((plat) => (
-                    <button
-                      key={plat}
-                      onClick={() => setSelectedPlatform(plat)}
-                      className={`flex-1 py-1 text-xs rounded transition uppercase font-semibold ${
-                        selectedPlatform === plat 
-                          ? 'bg-[#141414] text-[#E4E3E0] shadow-none' 
-                          : 'text-[#555] hover:text-[#CCC]'
-                      }`}
-                    >
-                      {plat === 'all' ? 'All' : plat}
-                    </button>
-                  ))}
+                <div className="md:col-span-4 flex items-center justify-center bg-[#0A0A0A] px-3 py-1.5 rounded-sm border border-[#262626]">
+                  <span className="text-xs font-semibold text-[#888] uppercase tracking-wider font-mono">Target: EBAY_AU Listings</span>
                 </div>
               </div>
 
@@ -675,24 +736,24 @@ const loadDemoData = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-1">
                 {/* Min Price */}
                 <div>
-                  <label className="block text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Min Price ($)</label>
+                  <label className="block text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Min Price ($ AUD)</label>
                   <input
                     type="number"
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value)}
-                    placeholder="e.g. 50"
+                    placeholder="e.g. 200"
                     className="w-full bg-[#0A0A0A] border border-[#262626] focus:border-[#E4E3E0] rounded-sm px-3 py-1.5 text-xs text-[#E4E3E0] outline-none"
                   />
                 </div>
 
                 {/* Max Price */}
                 <div>
-                  <label className="block text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Max Price ($)</label>
+                  <label className="block text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Max Price ($ AUD)</label>
                   <input
                     type="number"
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
-                    placeholder="e.g. 500"
+                    placeholder="e.g. 5000"
                     className="w-full bg-[#0A0A0A] border border-[#262626] focus:border-[#E4E3E0] rounded-sm px-3 py-1.5 text-xs text-[#E4E3E0] outline-none"
                   />
                 </div>
@@ -706,10 +767,9 @@ const loadDemoData = () => {
                     className="w-full bg-[#0A0A0A] border border-[#262626] focus:border-[#E4E3E0] rounded-sm px-2 py-1.5 text-xs text-[#CCC] outline-none"
                   >
                     <option value="all">Any Condition</option>
-                    <option value="new">New / Mint</option>
-                    <option value="used">Used / Pre-owned</option>
-                    <option value="tested">Tested / Good</option>
-                    <option value="parts">For Parts / Untested</option>
+                    <option value="new">New / Brand New</option>
+                    <option value="used">Used / Excellent / Refurbished</option>
+                    <option value="parts">For Parts / Faulty / Untested</option>
                   </select>
                 </div>
 
@@ -721,7 +781,7 @@ const loadDemoData = () => {
                     onChange={(e: any) => setSortBy(e.target.value)}
                     className="w-full bg-[#0A0A0A] border border-[#262626] focus:border-[#E4E3E0] rounded-sm px-2 py-1.5 text-xs text-[#CCC] outline-none"
                   >
-                    <option value="scraped-new">Date Added (Newest)</option>
+                    <option value="scraped-new">Scraped At (Newest)</option>
                     <option value="price-asc">Price (Low to High)</option>
                     <option value="price-desc">Price (High to Low)</option>
                     <option value="title-asc">Title (A-Z)</option>
@@ -734,7 +794,7 @@ const loadDemoData = () => {
             {filteredItems.length > 0 && priceHistogram.length > 0 && (
               <div className="bg-[#0D0D0D] rounded-sm border border-[#262626] p-5 shadow-none">
                 <h3 className="text-xs font-semibold text-[#E4E3E0] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <ListFilter size={14} className="text-[#E4E3E0]" /> Price Distribution spread (Active view)
+                  <ListFilter size={14} className="text-[#E4E3E0]" /> Active Price Distribution (AUD)
                 </h3>
                 <div className="flex items-end justify-between gap-4 h-24 pt-4 border-b border-[#262626]">
                   {priceHistogram.map((bucket, idx) => {
@@ -752,7 +812,7 @@ const loadDemoData = () => {
                           />
                         </div>
                         {/* Tooltip */}
-                        <div className="absolute -top-6 opacity-0 group-hover:opacity-100 bg-[#141414] text-[10px] text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono border border-[#333] pointer-events-none transition duration-150 shadow-none">
+                        <div className="absolute -top-6 opacity-0 group-hover:opacity-100 bg-[#141414] text-[10px] text-[#E4E3E0] px-1.5 py-0.5 rounded font-mono border border-[#333] pointer-events-none transition duration-150 shadow-none z-10">
                           {bucket.count} items
                         </div>
                         {/* Axis Label */}
@@ -771,7 +831,7 @@ const loadDemoData = () => {
               <div className="border-b border-[#262626] bg-[#141414] px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <Layers size={18} className="text-[#E4E3E0]" />
-                  <span className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Scraped Listings Dataset</span>
+                  <span className="text-[10px] font-bold tracking-widest text-[#555] uppercase font-mono">Target Schema Dataset (EBAY_AU)</span>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
                   <button
@@ -794,7 +854,7 @@ const loadDemoData = () => {
                   >
                     <Download size={12} /> {selectedIds.size > 0 ? `Download JSON (${selectedIds.size})` : "Download JSON"}
                   </button>
-                                    <button
+                  <button
                     onClick={copyCSVToClipboard}
                     disabled={filteredItems.length === 0}
                     className="px-2.5 py-1 text-xs bg-[#0A0A0A] border border-[#262626] hover:bg-[#141414] text-[#E4E3E0] rounded flex items-center gap-1 transition disabled:opacity-40 disabled:pointer-events-none"
@@ -811,7 +871,7 @@ const loadDemoData = () => {
                 </div>
               </div>
 
-              {/* Add Custom Row Inline Modal/Form */}
+              {/* Add Custom Row Inline Form */}
               <AnimatePresence>
                 {showAddManualForm && (
                   <motion.div
@@ -831,56 +891,80 @@ const loadDemoData = () => {
                         <input
                           type="text"
                           required
-                          placeholder="Listing Title (e.g. Sony DSLR Body)"
+                          placeholder="Listing Title (e.g., Lenovo ThinkPad T14)"
                           value={manualItemForm.title}
                           onChange={(e) => setManualItemForm(prev => ({ ...prev, title: e.target.value }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none col-span-1 md:col-span-2"
                         />
                         <input
-                          type="text"
+                          type="number"
                           required
-                          placeholder="Price Display (e.g. $220.00)"
-                          value={manualItemForm.price}
-                          onChange={(e) => setManualItemForm(prev => ({ ...prev, price_aud: e.target.value }))}
+                          placeholder="Price (AUD, e.g. 1200)"
+                          value={manualItemForm.price_aud || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, price_aud: parseFloat(e.target.value) || 0 }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
                         />
                         <input
                           type="text"
-                          placeholder="Condition (e.g. Vintage Excellent)"
-                          value={manualItemForm.condition}
-                          onChange={(e) => setManualItemForm(prev => ({ ...prev, condition: e.target.value }))}
+                          placeholder="Condition (e.g. Excellent - Refurbished)"
+                          value={manualItemForm.condition_label}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, condition_label: e.target.value }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
                         />
                         <input
                           type="text"
-                          placeholder="Location (e.g. San Jose, CA)"
-                          value={manualItemForm.location}
+                          placeholder="Pickup Location (e.g. Melbourne, VIC)"
+                          value={manualItemForm.pickup_location_text || ""}
                           onChange={(e) => setManualItemForm(prev => ({ ...prev, pickup_location_text: e.target.value }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
                         />
-                        <select
-                          value={manualItemForm.platform}
-                          onChange={(e: any) => setManualItemForm(prev => ({ ...prev, platform: e.target.value }))}
-                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#CCC] outline-none"
-                        >
-                          <option value="ebay">eBay</option>
-                          <option value="amazon">Amazon</option>
-                          <option value="gumtree">Gumtree</option>
-                          <option value="facebook">Facebook Marketplace</option>
-                          <option value="other">Other</option>
-                        </select>
                         <input
-                          type="url"
-                          placeholder="Direct Listing URL (Optional)"
-                          value={manualItemForm.url}
+                          type="text"
+                          placeholder="CPU Name (e.g., Intel i7-12700H)"
+                          value={manualItemForm.cpu_name || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, cpu_name: e.target.value }))}
+                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="GPU Name (e.g., NVIDIA RTX 3060)"
+                          value={manualItemForm.gpu_name || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, gpu_name: e.target.value }))}
+                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
+                        />
+                        <input
+                          type="number"
+                          placeholder="System RAM (GB, e.g. 32)"
+                          value={manualItemForm.total_system_ram || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, total_system_ram: parseInt(e.target.value) || 0 }))}
+                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Storage (e.g., 1TB SSD)"
+                          value={manualItemForm.storage || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, storage: e.target.value }))}
+                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Exact Model Name"
+                          value={manualItemForm.exact_model_name || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, exact_model_name: e.target.value }))}
+                          className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Listing URL"
+                          value={manualItemForm.url || ""}
                           onChange={(e) => setManualItemForm(prev => ({ ...prev, url: e.target.value }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none col-span-1 md:col-span-2"
                         />
                         <input
-                          type="url"
-                          placeholder="Image URL (Optional)"
-                          value={manualItemForm.imageUrl}
-                          onChange={(e) => setManualItemForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                          type="text"
+                          placeholder="Seller Name"
+                          value={manualItemForm.seller_name || ""}
+                          onChange={(e) => setManualItemForm(prev => ({ ...prev, seller_name: e.target.value }))}
                           className="bg-[#0D0D0D] border border-[#262626] text-xs rounded p-2 text-[#E4E3E0] outline-none"
                         />
                       </div>
@@ -914,30 +998,24 @@ const loadDemoData = () => {
                           className="accent-[#E4E3E0] cursor-pointer"
                         />
                       </th>
-                      <th className="py-3 px-4">Source</th>
-                      <th className="py-3 px-4">Item Title</th>
-                      <th className="py-3 px-4 text-right">Price</th>
+                      <th className="py-3 px-4">Platform</th>
+                      <th className="py-3 px-4">Listing Detail Specs</th>
+                      <th className="py-3 px-4 text-right">Price (AUD)</th>
                       <th className="py-3 px-4">Location</th>
                       <th className="py-3 px-4 text-center">Actions</th>
                     </tr>
                   </thead>
 
-                  
                   <tbody className="divide-y divide-[#262626]">
                     {filteredItems.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-12 text-center text-[#555] text-xs italic">
-                          No matching records found in this workspace view.
+                          No matching eBay records found in this workspace view.
                         </td>
                       </tr>
                     ) : (
                       filteredItems.map((item) => {
                         const isEditing = editingId === item.id;
-                        let platBadgeClass = "text-[#888]";
-                        if (item.platform === 'ebay') platBadgeClass = "text-[#6A9955]";
-                        else if (item.platform === 'amazon') platBadgeClass = "text-[#E46B6B]";
-                        else if (item.platform === 'gumtree') platBadgeClass = "text-[#9B6BE4]";
-                        else if (item.platform === 'facebook') platBadgeClass = "text-[#4A90E2]";
                         
                         return (
                           <tr 
@@ -958,39 +1036,81 @@ const loadDemoData = () => {
                                 className="accent-[#E4E3E0] cursor-pointer"
                               />
                             </td>
-                            <td className="py-3 px-4 font-mono font-semibold">
-                              <span className={platBadgeClass}>
-                                {item.platform === 'facebook' ? 'FB Mkt' : (item.platform ? item.platform.charAt(0).toUpperCase() + item.platform.slice(1) : 'Unknown')}
-                              </span>
+                            <td className="py-3 px-4 font-mono font-bold text-[#6A9955]">
+                              {item.platform || "EBAY_AU"}
                             </td>
                             <td className="py-3 px-4 max-w-sm">
                               {isEditing ? (
-                                <input
-                                  type="text"
-                                  value={editForm.title}
-                                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                  className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1.5 outline-none text-[#E4E3E0]"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSaveEdit();
-                                    if (e.key === 'Escape') setEditingId(null);
-                                  }}
-                                />
+                                <div className="space-y-2 py-1">
+                                  <div>
+                                    <label className="text-[9px] text-[#555] block font-bold font-mono">Title</label>
+                                    <input
+                                      type="text"
+                                      value={editForm.title}
+                                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                                      className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[9px] text-[#555] block font-bold font-mono">CPU</label>
+                                      <input
+                                        type="text"
+                                        value={editForm.cpu_name || ""}
+                                        onChange={(e) => setEditForm({ ...editForm, cpu_name: e.target.value })}
+                                        className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] text-[#555] block font-bold font-mono">GPU</label>
+                                      <input
+                                        type="text"
+                                        value={editForm.gpu_name || ""}
+                                        onChange={(e) => setEditForm({ ...editForm, gpu_name: e.target.value })}
+                                        className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[9px] text-[#555] block font-bold font-mono">RAM (GB)</label>
+                                      <input
+                                        type="number"
+                                        value={editForm.total_system_ram || ""}
+                                        onChange={(e) => setEditForm({ ...editForm, total_system_ram: e.target.value })}
+                                        className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] text-[#555] block font-bold font-mono">Storage</label>
+                                      <input
+                                        type="text"
+                                        value={editForm.storage || ""}
+                                        onChange={(e) => setEditForm({ ...editForm, storage: e.target.value })}
+                                        className="w-full bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
                               ) : (
                                 <div className="space-y-1">
-                                  <div className="text-[#CCC] truncate">
+                                  <div className="text-[#CCC] font-medium leading-snug">
                                     {item.title}
                                   </div>
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[#555] font-mono mt-1">
-                                    {item.condition_label && <span>COND: {item.condition_label}</span>}
-                                    {item.seller_name && <span className="text-[#777]">SELLER: {item.seller_name} {item.seller_rating && `(${item.seller_rating})`}</span>}
-                                    {item.shipping_type && <span>SHIP: {item.shipping_type}</span>}
-                                    {item.gpu_name && <span>STOCK: {item.gpu_name}</span>}
-                                    {item.cpu_name && <span>BIDS: {item.cpu_name}</span>}
-                                    {item.full_listing_text && <span className="text-[#888] truncate block max-w-full">EXTRA: {item.full_listing_text}</span>}
+                                    {item.condition_label && <span>COND: <span className="text-[#888]">{item.condition_label}</span></span>}
+                                    {item.seller_name && <span className="text-[#777]">SELLER: {item.seller_name} {item.seller_rating && `(${item.seller_rating}%)`}</span>}
+                                    {item.exact_model_name && <span className="text-emerald-500/80">MODEL: {item.exact_model_name}</span>}
+                                    {item.cpu_name && <span>CPU: {item.cpu_name}</span>}
+                                    {item.gpu_name && <span>GPU: {item.gpu_name}</span>}
+                                    {item.total_system_ram && <span>RAM: {item.total_system_ram}GB</span>}
+                                    {item.storage && <span>STORAGE: {item.storage}</span>}
+                                    {item.vram_capacity && <span>VRAM: {item.vram_capacity}GB</span>}
+                                    {item.shipping_type && <span>POSTAGE: {item.shipping_type}</span>}
                                   </div>
                                   {item.url && (
-                                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#888] hover:text-[#E4E3E0] inline-flex items-center gap-1">
-                                      Visit Original <ExternalLink size={10} />
+                                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#888] hover:text-[#E4E3E0] inline-flex items-center gap-1 mt-1 font-mono">
+                                      Visit Original Listing <ExternalLink size={10} />
                                     </a>
                                   )}
                                 </div>
@@ -1002,21 +1122,21 @@ const loadDemoData = () => {
                                   type="text"
                                   value={editForm.price_aud}
                                   onChange={(e) => setEditForm({ ...editForm, price_aud: e.target.value })}
-                                  className="w-20 bg-[#0D0D0D] text-xs text-right border border-[#444] rounded p-1 outline-none text-[#E4E3E0]"
+                                  className="w-20 bg-[#0D0D0D] text-xs text-right border border-[#444] rounded p-1 outline-none text-[#E4E3E0] font-mono"
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSaveEdit();
                                     if (e.key === 'Escape') setEditingId(null);
                                   }}
                                 />
                               ) : (
-                                <span>{item.price_aud}</span>
+                                <span>{item.price_aud ? `$${item.price_aud.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"}</span>
                               )}
                             </td>
                             <td className="py-3 px-4 text-[#777]">
                               {isEditing ? (
                                 <input
                                   type="text"
-                                  value={editForm.pickup_location_text}
+                                  value={editForm.pickup_location_text || ""}
                                   onChange={(e) => setEditForm({ ...editForm, pickup_location_text: e.target.value })}
                                   className="w-24 bg-[#0D0D0D] text-xs border border-[#444] rounded p-1 outline-none text-[#CCC]"
                                   onKeyDown={(e) => {
@@ -1025,7 +1145,7 @@ const loadDemoData = () => {
                                   }}
                                 />
                               ) : (
-                                <span className="truncate max-w-[120px] block" title={item.pickup_location_text}>{item.pickup_location_text || "N/A"}</span>
+                                <span className="truncate max-w-[120px] block" title={item.pickup_location_text || ""}>{item.pickup_location_text || "N/A"}</span>
                               )}
                             </td>
                             <td className="py-3 px-4">
@@ -1059,17 +1179,15 @@ const loadDemoData = () => {
         </div>
       </main>
 
-      {/* Persistent Footer */}
-      
-      {/* Footer Metrics */}
+      {/* Persistent Footer Metrics */}
       <footer className="mt-4 h-8 flex items-center justify-between px-8 text-[10px] font-mono text-[#444] border-t border-[#262626] bg-[#0A0A0A]">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.4)] ${isScraping ? 'bg-orange-500' : 'bg-gray-600'}`}></div>
-            <span>SCRAPER_ENGINE: {isScraping ? 'ACTIVE' : 'IDLE'}</span>
+            <span>SCRAPER_STATUS: {isScraping ? 'EXTRACTING' : 'READY'}</span>
           </div>
-          <div>DATA_INTEGRITY: OPTIMAL</div>
-          <div>CACHE_USAGE: 14%</div>
+          <div>ACTIVE_SCHEMA: EBAY_HARDWARE_LISTING</div>
+          <div>PLATFORM: CLOUD_INTEGRATION_OK</div>
         </div>
       </footer>
 
