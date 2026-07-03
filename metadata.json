@@ -1,0 +1,6 @@
+{
+  "name": "Marketplace Research Tool",
+  "description": "A gentle scraping and personal research tool that gathers, parses, and unifies product listing datasets from online marketplaces.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
